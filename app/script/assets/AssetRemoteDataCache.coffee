@@ -19,19 +19,17 @@
 window.z ?= {}
 z.assets ?= {}
 
-z.assets.AssetURLCache = do ->
+z.assets.AssetRemoteDataCache = do ->
   lru_cache = new LRUCache 100
 
-  set_url = (identifier, url) ->
-    removed_entry = lru_cache.put identifier, url
-    if removed_entry?
-      window.URL.revokeObjectURL removed_entry.value
-    return url
+  set = (identifier, data) ->
+    lru_cache.put identifier, data
+    Promise.resolve data
 
-  get_url = (identifier) ->
-    return lru_cache.get identifier
+  get = (identifier) ->
+    Promise.resolve lru_cache.get identifier
 
   return {
-    get_url: get_url
-    set_url: set_url
+    get: get
+    set: set
   }

@@ -78,18 +78,30 @@ class z.assets.AssetRemoteData
   ###
   Loads and decrypts stored asset
 
+  # TODO make caching optional
+
   @returns [Blob]
   ###
   load: =>
     type = undefined
 
-    @_load_buffer()
-    .then (data) =>
-      [buffer, type] = data
-      if @otr_key? and @sha256?
-        return z.assets.AssetCrypto.decrypt_aes_asset buffer, @otr_key.buffer, @sha256.buffer
-      return buffer
+    z.assets.AssetRemoteDataCache.get @identifier
+    .then (buffer) =>
+      console.debug 'buffer from cache ', buffer
+      if buffer
+        return buffer
+      return @_load_buffer()
+      .then (data) =>
+        console.debug 'buffer loaded'
+        [buffer, type] = data
+        if @otr_key? and @sha256?
+          return z.assets.AssetCrypto.decrypt_aes_asset buffer, @otr_key.buffer, @sha256.buffer
+        return buffer
+      .then (buffer) =>
+        console.debug 'buffer cached'
+        return z.assets.AssetRemoteDataCache.set @identifier, buffer
     .then (buffer) ->
+      console.debug 'creating blob ', buffer
       return new Blob [new Uint8Array buffer], type: type
 
   ###
@@ -98,10 +110,7 @@ class z.assets.AssetRemoteData
   @returns [String] url
   ###
   get_object_url: =>
-    object_url = z.assets.AssetURLCache.get_url @identifier
-    return Promise.resolve object_url if object_url?
-
-    @load().then (blob) => z.assets.AssetURLCache.set_url @identifier, window.URL.createObjectURL(blob)
+    @load().then (blob) => window.URL.createObjectURL(blob)
 
   _load_buffer: =>
     z.util.load_url_buffer @generate_url(), (xhr) =>
