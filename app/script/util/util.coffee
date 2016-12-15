@@ -348,12 +348,6 @@ z.util.render_message = (message) ->
   return message
 
 
-z.util.read_string_chars_as_hex = (text) ->
-  text.match(/../g).map (x) ->
-    String.fromCharCode window.parseInt x, 16
-  .join ''
-
-
 # append array to knockout observableArray
 # source: https://github.com/knockout/knockout/issues/416
 z.util.ko_array_push_all = (ko_array, values_to_push) ->
