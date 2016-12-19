@@ -25,6 +25,8 @@ class z.ViewModel.content.ContentViewModel
   constructor: (element_id, @audio_repository, @call_center, @client_repository, @conversation_repository, @cryptography_repository, @giphy_repository, @media_repository, @search_repository, @user_repository, @properties_repository) ->
     @logger = new z.util.Logger 'z.ViewModel.ContentViewModel', z.config.LOGGER.OPTIONS
 
+    @message_ets = ko.observableArray()
+
     # state
     @content_state = ko.observable z.ViewModel.content.CONTENT_STATE.WATERMARK
     @multitasking =
@@ -64,6 +66,8 @@ class z.ViewModel.content.ContentViewModel
           @preferences_av.initiate_devices()
         when z.ViewModel.content.CONTENT_STATE.PREFERENCES_DEVICES
           @preferences_devices.update_fingerprint()
+        when z.ViewModel.content.CONTENT_STATE.COLLECTION
+          @get_events()
         else
           @conversation_input.removed_from_view()
           @conversation_titlebar.removed_from_view()
@@ -156,6 +160,7 @@ class z.ViewModel.content.ContentViewModel
 
   _get_element_of_content: (content_state) ->
     switch content_state
+      when z.ViewModel.content.CONTENT_STATE.CONVERSATION then '.collection'
       when z.ViewModel.content.CONTENT_STATE.CONVERSATION then '.conversation'
       when z.ViewModel.content.CONTENT_STATE.CONNECTION_REQUESTS then '.connect-requests'
       when z.ViewModel.content.CONTENT_STATE.PREFERENCES_ABOUT then '.preferences-about'
@@ -176,5 +181,12 @@ class z.ViewModel.content.ContentViewModel
       @preferences_av.release_devices()
 
   _show_content: (new_content_state) ->
+    LOG '_show_content ', new_content_state
     @content_state new_content_state
     @_shift_content @_get_element_of_content new_content_state
+
+  get_events: =>
+    conversation_et = @previous_conversation
+    @conversation_repository.conversation_service.load_events_from_db conversation_et.id, new Date(0), new Date(), 10000000000
+    .then (events) =>
+      @message_ets @conversation_repository.event_mapper.map_json_events events: events, conversation_et
