@@ -28,7 +28,7 @@ class z.components.FileAssetComponent
   ###
   constructor: (params, component_info) ->
     @asset = params.asset
-    @expired = params.expired
+    @expired = params.expired or ko.observable false
 
     @circle_upload_progress = ko.pureComputed =>
       size = if @large then '200' else '100'
