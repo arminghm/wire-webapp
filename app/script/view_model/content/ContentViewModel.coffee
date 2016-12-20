@@ -160,7 +160,7 @@ class z.ViewModel.content.ContentViewModel
 
   _get_element_of_content: (content_state) ->
     switch content_state
-      when z.ViewModel.content.CONTENT_STATE.CONVERSATION then '.collection'
+      when z.ViewModel.content.CONTENT_STATE.COLLECTION then '.collection'
       when z.ViewModel.content.CONTENT_STATE.CONVERSATION then '.conversation'
       when z.ViewModel.content.CONTENT_STATE.CONNECTION_REQUESTS then '.connect-requests'
       when z.ViewModel.content.CONTENT_STATE.PREFERENCES_ABOUT then '.preferences-about'
@@ -181,7 +181,6 @@ class z.ViewModel.content.ContentViewModel
       @preferences_av.release_devices()
 
   _show_content: (new_content_state) ->
-    LOG '_show_content ', new_content_state
     @content_state new_content_state
     @_shift_content @_get_element_of_content new_content_state
 
