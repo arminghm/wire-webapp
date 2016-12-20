@@ -218,6 +218,12 @@ class z.conversation.ConversationRepository
       @logger.info "Could not load events for conversation: #{conversation_et.id}", error
       throw error
 
+  get_events_for_category: (conversation_et, catogory) =>
+    @conversation_service.load_events_from_db conversation_et.id, new Date(0), new Date(), 10000000000
+    .then (events) =>
+      console.log 'collection events ', events.length
+      @message_ets @event_mapper.map_json_events events, conversation_et
+
   ###
   Get conversation unread events.
   @param conversation_et [z.entity.Conversation] Conversation to start from

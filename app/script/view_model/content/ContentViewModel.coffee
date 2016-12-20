@@ -188,7 +188,5 @@ class z.ViewModel.content.ContentViewModel
   get_events: =>
     conversation_et = @previous_conversation
     @message_ets.removeAll()
-    @conversation_repository.conversation_service.load_events_from_db conversation_et.id, new Date(0), new Date(), 10000000000
-    .then (events) =>
-      console.log 'collection events ', events.length
-      @message_ets @conversation_repository.event_mapper.map_json_events events: events, conversation_et
+    @conversation_repository.get_events_for_category conversation_et
+    .then (message_ets) => @message_ets message_ets
