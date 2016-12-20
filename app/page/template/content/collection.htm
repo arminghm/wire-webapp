@@ -34,21 +34,15 @@
   }
 </style>
 
-<div id="collection" class="collection">
+<div id="collection" class="collection" data-bind="with: $root.collection, added_to_view: $root.collection.added_to_view">
 
-  <div class="preferences-titlebar collection-titlebar ">
-    <span class="icon-back"></span>
+  <div class="preferences-titlebar collection-titlebar">
+    <span class="icon-back" data-bind="click: click_on_back_button"></span>
     <span class="collection-titlebar-center">
       <span>Library</span>
       <span class="text-graphite">Italy Trip</span>
     </span>
     <span class="icon-close"></span>
-  </div>
-  <div class="preferences-titlebar collection-tabs">
-    <div class="user-profile-tabs" data-tab-index='0'>
-      <span class="user-profile-tab">Pictures</span>
-      <span class="user-profile-tab">Files</span>
-    </div>
   </div>
 
   <!-- ko if: message_ets().length === 0 -->

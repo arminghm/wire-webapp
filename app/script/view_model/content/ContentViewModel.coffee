@@ -25,8 +25,6 @@ class z.ViewModel.content.ContentViewModel
   constructor: (element_id, @audio_repository, @call_center, @client_repository, @conversation_repository, @cryptography_repository, @giphy_repository, @media_repository, @search_repository, @user_repository, @properties_repository) ->
     @logger = new z.util.Logger 'z.ViewModel.ContentViewModel', z.config.LOGGER.OPTIONS
 
-    @message_ets = ko.observableArray()
-
     # state
     @content_state = ko.observable z.ViewModel.content.CONTENT_STATE.WATERMARK
     @multitasking =
@@ -37,6 +35,7 @@ class z.ViewModel.content.ContentViewModel
     # nested view models
     @call_shortcuts =             new z.ViewModel.CallShortcutsViewModel @call_center
     @video_calling =              new z.ViewModel.VideoCallingViewModel 'video-calling', @call_center, @conversation_repository, @media_repository, @user_repository, @multitasking
+    @collection =                 new z.ViewModel.content.CollectionViewModel 'collection', @conversation_repository
     @connect_requests =           new z.ViewModel.content.ConnectRequestsViewModel 'connect-requests', @user_repository
     @conversation_titlebar =      new z.ViewModel.ConversationTitlebarViewModel 'conversation-titlebar', @call_center, @conversation_repository, @multitasking
     @conversation_input =         new z.ViewModel.ConversationInputViewModel 'conversation-input', @conversation_repository, @user_repository
@@ -67,7 +66,7 @@ class z.ViewModel.content.ContentViewModel
         when z.ViewModel.content.CONTENT_STATE.PREFERENCES_DEVICES
           @preferences_devices.update_fingerprint()
         when z.ViewModel.content.CONTENT_STATE.COLLECTION
-          @get_events()
+          @collection.set_conversation @previous_conversation
         else
           @conversation_input.removed_from_view()
           @conversation_titlebar.removed_from_view()
@@ -183,9 +182,3 @@ class z.ViewModel.content.ContentViewModel
   _show_content: (new_content_state) ->
     @content_state new_content_state
     @_shift_content @_get_element_of_content new_content_state
-
-  get_events: =>
-    conversation_et = @previous_conversation
-    @message_ets.removeAll()
-    @conversation_repository.get_events_for_category conversation_et
-    .then (message_ets) => @message_ets message_ets
