@@ -1,7 +1,9 @@
 <div id="conversation-titlebar" class="conversation-titlebar" data-bind="with: $root.conversation_titlebar">
   <!-- ko if: conversation_et() -->
 
-    <span class="conversation-titlebar-icon button-icon-large icon-fullscreen" data-bind="click: click_on_collection_button"></span>
+    <div class="conversation-titlebar-library">
+      <span class="conversation-titlebar-icon button-icon-large icon-grid" data-bind="click: click_on_collection_button"></span>
+    </div>
 
     <!-- ko if: conversation_et().is_verified() -->
       <svg class="conversation-verified-icon" width="16" height="16">

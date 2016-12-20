@@ -222,7 +222,7 @@ class z.conversation.ConversationRepository
     @conversation_service.load_events_from_db conversation_et.id, new Date(0), new Date(), 10000000000
     .then (events) =>
       console.log 'collection events ', events.length
-      @message_ets @event_mapper.map_json_events events, conversation_et
+      return @event_mapper.map_json_events events, conversation_et
 
   ###
   Get conversation unread events.
