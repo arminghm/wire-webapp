@@ -8,23 +8,67 @@
   }
 
   .collection image-component {
-    width: 100px;
-    height: 100px;
+    width: 200px;
+    height: 200px;
+  }
+
+  .collection-tabs {
+    overflow: hidden;
+  }
+
+  .collection-tabs .user-profile-tabs{
+    width: 352px;
+  }
+
+  .collection-titlebar {
+    padding-left: 24px;
+    padding-right: 24px;
+    justify-content: space-between;
+  }
+
+  .collection-titlebar-center {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
   }
 </style>
 
 <div id="collection" class="collection">
 
-  <!-- ko foreach: {data: message_ets, as: 'message_et'} -->
-    <!-- ko foreach: {data: message_et.assets, as: 'asset'} -->
-      <!-- ko if: asset.is_image() -->
-        <image-component params="asset: asset.resource"></image-component>
-      <!-- /ko -->
-      <!-- ko if: asset.is_audio() -->
-        <audio-asset params="asset: asset"></audio-asset>
-      <!-- /ko -->
-      <!-- ko if: asset.is_file() -->
-        <file-asset params="asset: asset"></file-asset>
+  <div class="preferences-titlebar collection-titlebar ">
+    <span class="icon-back"></span>
+    <span class="collection-titlebar-center">
+      <span>Library</span>
+      <span class="text-graphite">Italy Trip</span>
+    </span>
+    <span class="icon-close"></span>
+  </div>
+  <div class="preferences-titlebar collection-tabs">
+    <div class="user-profile-tabs" data-tab-index='0'>
+      <span class="user-profile-tab">Pictures</span>
+      <span class="user-profile-tab">Files</span>
+    </div>
+  </div>
+
+  <!-- ko if: message_ets().length === 0 -->
+    <div class="full-screen flex-center">
+      <div class="icon-spinner spin text-theme"></div>
+    </div>
+  <!-- /ko -->
+
+  <!-- ko if: message_ets().length > 0 -->
+    <!-- ko foreach: {data: message_ets, as: 'message_et'} -->
+      <!-- ko foreach: {data: message_et.assets, as: 'asset'} -->
+        <!-- ko if: asset.is_image() -->
+          <image-component params="asset: asset.resource"></image-component>
+        <!-- /ko -->
+        <!-- ko if: asset.is_audio() -->
+          <audio-asset params="asset: asset"></audio-asset>
+        <!-- /ko -->
+        <!-- ko if: asset.is_file() -->
+          <file-asset params="asset: asset"></file-asset>
+        <!-- /ko -->
       <!-- /ko -->
     <!-- /ko -->
   <!-- /ko -->
