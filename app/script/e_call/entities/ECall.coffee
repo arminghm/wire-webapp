@@ -237,8 +237,9 @@ class z.e_call.entities.ECall
     return Promise.reject new z.e_call.ECallError z.e_call.ECallError::TYPE.PARTICIPANT_NOT_FOUND
 
   ###
-  Check whether this call is a video call
-  @todo update docs
+  Update call participant with ECallMessage.
+  @param user_et [z.entity.User] User to be updated
+  @param e_call_message [z.e_call.entities.ECallMessage] E-call message to update user with
   ###
   update_participant: (user_et, e_call_message) =>
     @get_participant_by_id user_et.id
