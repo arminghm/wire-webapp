@@ -31,11 +31,11 @@ class z.ViewModel.content.CollectionViewModel
     @audio = ko.observableArray()
     @links = ko.observableArray()
 
-    @conversation_et = null
+    @conversation_et = ko.observable()
 
   set_conversation: (conversation_et) =>
-    @conversation_et = conversation_et
-    @conversation_repository.get_events_for_category @conversation_et
+    @conversation_et conversation_et
+    @conversation_repository.get_events_for_category conversation_et
     .then (message_ets) =>
       for message_et in message_ets
         asset_et = message_et.get_first_asset()
@@ -51,8 +51,8 @@ class z.ViewModel.content.CollectionViewModel
     console.debug 'added_to_view'
 
   removed_from_view: =>
-    @conversation_et = null
+    @conversation_et null
     [@images, @files].forEach (array) -> array.removeAll()
 
   click_on_back_button: =>
-    amplify.publish z.event.WebApp.CONVERSATION.SWITCH, @conversation_et
+    amplify.publish z.event.WebApp.CONVERSATION.SWITCH, @conversation_et()
