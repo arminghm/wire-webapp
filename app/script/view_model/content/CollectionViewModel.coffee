@@ -25,20 +25,34 @@ class z.ViewModel.content.CollectionViewModel
   constructor: (element_id, @conversation_repository) ->
     @logger = new z.util.Logger 'z.ViewModel.CollectionViewModel', z.config.LOGGER.OPTIONS
 
-    @message_ets = ko.observableArray()
+    @images = ko.observableArray()
+    @files = ko.observableArray()
+    @video = ko.observableArray()
+    @audio = ko.observableArray()
+    @links = ko.observableArray()
+
     @conversation_et = null
 
   set_conversation: (conversation_et) =>
     @conversation_et = conversation_et
     @conversation_repository.get_events_for_category @conversation_et
-    .then (message_ets) => @message_ets message_ets
+    .then (message_ets) =>
+      for message_et in message_ets
+        asset_et = message_et.get_first_asset()
+        switch
+          when asset_et.is_image()
+            @images.push asset_et
+          when asset_et.is_file()
+            @files.push asset_et
+          when asset_et.previews()[0]
+            @links.push asset_et.previews()[0]
 
   added_to_view: =>
     console.debug 'added_to_view'
 
   removed_from_view: =>
     @conversation_et = null
-    @message_ets.removeAll()
+    [@images, @files].forEach (array) -> array.removeAll()
 
   click_on_back_button: =>
     amplify.publish z.event.WebApp.CONVERSATION.SWITCH, @conversation_et

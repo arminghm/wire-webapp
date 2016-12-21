@@ -1,70 +1,41 @@
-<style>
-  .collection {
-    display: flex;
-    flex-wrap: wrap;
-    width: 800px;
-    height: 100%;
-    overflow-y: scroll;
-  }
+<div id="collection"
+     class="collection content-wrapper"
+     data-bind="with: $root.collection, added_to_view: $root.collection.added_to_view, removed_from_view: $root.collection.removed_from_view">
 
-  .collection image-component {
-    width: 200px;
-    height: 200px;
-  }
+  <!-- ko if: conversation_et() -->
 
-  .collection-tabs {
-    overflow: hidden;
-  }
+    <div class="content-titlebar">
+      <div class="content-titlebar-items-left">
+        <span class="content-titlebar-icon icon-back" data-bind="click: click_on_back_button"></span>
+      </div>
 
-  .collection-tabs .user-profile-tabs{
-    width: 352px;
-  }
+      <span class="content-titlebar-items-center">
+        <span>Library</span>
+        <span class="text-graphite" data-bind="text: conversation_et().display_name()"></span>
+      </span>
 
-  .collection-titlebar {
-    padding-left: 24px;
-    padding-right: 24px;
-    justify-content: space-between;
-  }
+      <div class="content-titlebar-items-right">
+        <span class="content-titlebar-icon icon-close"></span>
+      </div>
 
-  .collection-titlebar-center {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-  }
-</style>
-
-<div id="collection" class="collection" data-bind="with: $root.collection, added_to_view: $root.collection.added_to_view">
-
-  <div class="preferences-titlebar collection-titlebar">
-    <span class="icon-back" data-bind="click: click_on_back_button"></span>
-    <span class="collection-titlebar-center">
-      <span>Library</span>
-      <span class="text-graphite">Italy Trip</span>
-    </span>
-    <span class="icon-close"></span>
-  </div>
-
-  <!-- ko if: message_ets().length === 0 -->
-    <div class="full-screen flex-center">
-      <div class="icon-spinner spin text-theme"></div>
     </div>
-  <!-- /ko -->
 
-  <!-- ko if: message_ets().length > 0 -->
-    <!-- ko foreach: {data: message_ets, as: 'message_et'} -->
-      <!-- ko foreach: {data: message_et.assets, as: 'asset'} -->
-        <!-- ko if: asset.is_image() -->
-          <image-component params="asset: asset.resource"></image-component>
-        <!-- /ko -->
-        <!-- ko if: asset.is_audio() -->
-          <audio-asset params="asset: asset"></audio-asset>
-        <!-- /ko -->
-        <!-- ko if: asset.is_file() -->
-          <file-asset params="asset: asset"></file-asset>
-        <!-- /ko -->
+    <div class="content-list collection-list">
+
+      <!-- ko foreach: {data: images, as: 'image'} -->
+        <image-component class="collection-image" params="asset: image.resource"></image-component>
       <!-- /ko -->
-    <!-- /ko -->
+
+      <!-- ko foreach: {data: files, as: 'file'} -->
+        <file-asset params="asset: file"></file-asset>
+      <!-- /ko -->
+
+      <!-- ko foreach: {data: links, as: 'link'} -->
+        <link-preview-asset params="preview: link"></link-preview-asset>
+      <!-- /ko -->
+
+    </div>
+
   <!-- /ko -->
 
 </div>
