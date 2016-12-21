@@ -207,8 +207,8 @@ class z.e_call.ECallCenter
   @param user_id [String] ID of user which is source of event
   @param e_call_message [z.e_call.entities.ECallMessage] E-call message entity
   ###
-  _on_e_call_hangup_event: (conversation_id, user_id) =>
-    return if e_call_message.response
+  _on_e_call_hangup_event: (conversation_id, user_id, e_call_message) =>
+    return if e_call_message?.response
 
     @get_e_call_by_id conversation_id
     .then (e_call_et) =>
