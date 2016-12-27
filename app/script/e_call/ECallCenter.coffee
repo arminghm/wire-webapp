@@ -25,10 +25,10 @@ E_CALL_CONFIG =
     z.event.Client.CALL.E_CALL
   ]
   SUPPORTED_VERSIONS: [
-    '3.0'
+    z.e_call.enum.E_CALL_VERSION.E_CALL
   ]
 
-# User repository for all e-call interactions with the e-call service.
+# E-call center for all e-call interactions with the e-call service.
 class z.e_call.ECallCenter
   ###
   Extended check for calling support of browser.
@@ -45,7 +45,7 @@ class z.e_call.ECallCenter
     return z.util.Environment.browser.supports.screen_sharing
 
   ###
-  Construct a new E-Call Center repository.
+  Construct a new e-call center.
 
   @param e_call_service [z.e_call.ECallService] Backend REST API e-call service implementation
   @param conversation_repository [z.conversation.ConversationRepository] Repository for conversation interactions
@@ -71,9 +71,7 @@ class z.e_call.ECallCenter
 
     @block_event_handling = true
 
-    @share_e_call_states()
-    @subscribe_to_app_events()
-    @subscribe_to_state_events()
+    @subscribe_to_events()
 
   # Initiate calls config update.
   initiate_config: =>
@@ -82,58 +80,16 @@ class z.e_call.ECallCenter
       @_update_e_call_config()
     , E_CALL_CONFIG.CONFIG_UPDATE_INTERVAL
 
-  # Share e-call states with z.media.MediaStreamHandler.
-  share_e_call_states: =>
-    @media_stream_handler.e_calls = @e_calls
-    @media_stream_handler.joined_e_call = @joined_e_call
-
   # Subscribe to amplify topics.
-  subscribe_to_app_events: =>
+  subscribe_to_events: =>
     amplify.subscribe z.event.WebApp.LOADED, @initiate_config
     amplify.subscribe z.event.WebApp.CALL.EVENT_FROM_BACKEND, @on_event
     amplify.subscribe z.util.Logger::LOG_ON_DEBUG, @set_logging
-
-  # Subscribe to amplify topics.
-  subscribe_to_state_events: =>
-    amplify.subscribe z.event.WebApp.CALL.MEDIA.TOGGLE, @toggle_media
-    amplify.subscribe z.event.WebApp.CALL.STATE.DELETE, @delete_call
-    amplify.subscribe z.event.WebApp.CALL.STATE.IGNORE, @ignore_call
-    amplify.subscribe z.event.WebApp.CALL.STATE.JOIN, @join_call
-    amplify.subscribe z.event.WebApp.CALL.STATE.LEAVE, @leave_call
-    amplify.subscribe z.event.WebApp.CALL.STATE.REMOVE_PARTICIPANT, @remove_participant
-    amplify.subscribe z.event.WebApp.CALL.STATE.TOGGLE, @toggle_joined
-
-  # Un-subscribe from amplify topics.
-  un_subscribe_from_app_events: ->
-    amplify.unsubscribeAll z.event.WebApp.CALL.EVENT_FROM_BACKEND
-
-  # Un-subscribe from amplify topics.
-  un_subscribe_from_state_events: ->
-    subscriptions = [
-      z.event.WebApp.CALL.STATE.CHECK
-      z.event.WebApp.CALL.STATE.DELETE
-      z.event.WebApp.CALL.STATE.JOIN
-      z.event.WebApp.CALL.STATE.LEAVE
-      z.event.WebApp.CALL.STATE.REMOVE_PARTICIPANT
-      z.event.WebApp.CALL.STATE.TOGGLE
-    ]
-    amplify.unsubscribeAll topic for topic in subscriptions
 
 
   ###############################################################################
   # Inbound e-call events
   ###############################################################################
-
-  ###
-  Check whether call should be handled by v3 API.
-  @param conversation_id [String] ID of conversation related to e-call
-  @return [Boolean] Call is handled by v3 API
-  ###
-  handled_by_v3: (conversation_id) =>
-    if @use_v3_api
-      conversation_et = @conversation_repository.get_conversation_by_id conversation_id
-      return not conversation_et.is_group()
-    return false
 
   ###
   Handle incoming calling events from backend.
@@ -343,8 +299,8 @@ class z.e_call.ECallCenter
     @get_e_call_by_id conversation_id
     .then (e_call_et) ->
       return e_call_et.state()
-    .catch (error) =>
-      throw error if not @handled_by_v3 conversation_id
+    .catch (error) ->
+      throw error unless error.type is z.e_call.ECallError::TYPE.E_CALL_NOT_FOUND
       return z.calling.enum.CallState.OUTGOING
     .then (e_call_state) =>
       if e_call_state is z.calling.enum.CallState.OUTGOING and not z.calling.CallCenter.supports_calling()
@@ -387,8 +343,6 @@ class z.e_call.ECallCenter
   @param user_id [String] ID of user to be removed
   ###
   remove_participant: (conversation_id, user_id) =>
-    return true if not @handled_by_v3 conversation_id
-
     @_on_e_call_hangup_event conversation_id, user_id
 
   ###
