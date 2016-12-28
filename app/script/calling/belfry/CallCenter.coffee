@@ -101,7 +101,7 @@ class z.calling.belfry.CallCenter
   @param event [Object] Event payload
   ###
   _on_event_in_supported_browsers: (event) ->
-    if @use_v3_api
+    if @calling_config().use_v3_api
       conversation_et = @conversation_repository.get_conversation_by_id event.conversation
       @logger.warn "Received outdated calling v2 event in conversation '#{event.conversation}'" if conversation_et.is_one2one()
 
