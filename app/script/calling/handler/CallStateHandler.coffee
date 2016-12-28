@@ -348,7 +348,8 @@ class z.calling.handler.CallStateHandler
     @call_center.get_call_by_id conversation_id
     .then (call_et) ->
       return call_et.state()
-    .catch ->
+    .catch =>
+      throw new z.calling.CallError z.calling.CallError::TYPE.NOT_ENABLED if @call_center.calling_config().use_v3_api
       return z.calling.enum.CallState.OUTGOING
     .then (call_state) =>
       if call_state is z.calling.enum.CallState.OUTGOING and not z.calling.CallCenter.supports_calling()

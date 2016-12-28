@@ -53,7 +53,7 @@ class z.calling.CallCenter
   @param media_repository [z.media.MediaRepository] Repository for media interactions
   @param user_repository [z.user.UserRepository] Repository for all user and connection interactions
   ###
-  constructor: (@call_service, @conversation_repository, @media_repository, @user_repository) ->
+  constructor: (@calling_config, @call_service, @conversation_repository, @media_repository, @user_repository) ->
     @logger = new z.util.Logger 'z.calling.CallCenter', z.config.LOGGER.OPTIONS
 
     # Telemetry

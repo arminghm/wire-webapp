@@ -19,24 +19,28 @@
 window.z ?= {}
 z.e_call ?= {}
 
+CALLING_CONFIG =
+  CONFIG_UPDATE_INTERVAL: 6 * 60 * 60 * 1000 # 6 hours
+
 # Call repository for all calling interactions.
 class z.e_call.CallingRepository
   ###
   Construct a new E-Call Center repository.
 
   @param call_service [z.calling.CallService] Backend REST API call service implementation
-  @param e_call_service [z.e_call.ECallService] Backend REST API e-call service implementation
+  @param calling_service [z.e_call.CallingService] Backend REST API calling service implementation
   @param conversation_repository [z.conversation.ConversationRepository] Repository for conversation interactions
   @param media_repository [z.media.MediaRepository] Repository for media interactions
   @param user_repository [z.user.UserRepository] Repository for all user and connection interactions
   ###
-  constructor: (@call_service, @e_call_service, @conversation_repository, @media_repository, @user_repository) ->
+  constructor: (@call_service, @calling_service, @conversation_repository, @media_repository, @user_repository) ->
     @logger = new z.util.Logger 'z.e_call.CallingRepository', z.config.LOGGER.OPTIONS
 
+    @calling_config = ko.observable()
     @use_v3_api = false
 
-    @call_center = new z.calling.CallCenter @call_service, @conversation_repository, @media_repository, @user_repository
-    @e_call_center = new z.e_call.ECallCenter @e_call_service, @conversation_repository, @media_repository, @user_repository
+    @call_center = new z.calling.CallCenter @calling_config, @call_service, @conversation_repository, @media_repository, @user_repository
+    @e_call_center = new z.e_call.ECallCenter @calling_config, @conversation_repository, @media_repository, @user_repository
 
     @calls = ko.pureComputed =>
       return @call_center.calls().concat @e_call_center.e_calls()
@@ -63,26 +67,35 @@ class z.e_call.CallingRepository
     amplify.subscribe z.event.WebApp.CALL.STATE.LEAVE, => @switch_call_center z.e_call.enum.E_CALL_ACTION.LEAVE, arguments
     amplify.subscribe z.event.WebApp.CALL.STATE.REMOVE_PARTICIPANT, => @switch_call_center z.e_call.enum.E_CALL_ACTION.REMOVE_PARTICIPANT, arguments
     amplify.subscribe z.event.WebApp.CALL.STATE.TOGGLE, => @switch_call_center z.e_call.enum.E_CALL_ACTION.TOGGLE_STATE, arguments
+    amplify.subscribe z.event.WebApp.LOADED, @initiate_config
 
-  get_version_of_call: (conversation_id) ->
+  get_version_of_call: (conversation_id) =>
     @call_center.get_call_by_id conversation_id
     .then ->
       return z.e_call.enum.E_CALL_VERSION.BELFRY
-    .catch (error) ->
+    .catch (error) =>
       throw error unless error.type is z.calling.CallError::TYPE.CALL_NOT_FOUND
-      if @use_v3_api
-        @e_call_center.get_e_call_by_id conversation_id
-        .then ->
-          return z.e_call.enum.E_CALL_VERSION.E_CALL
-        .catch ->
-          throw error unless error.type is z.e_call.ECallError::TYPE.E_CALL_NOT_FOUND
+
+      @e_call_center.get_e_call_by_id conversation_id
+      .then ->
+        return z.e_call.enum.E_CALL_VERSION.E_CALL
+      .catch (error) ->
+        throw error unless error.type is z.e_call.ECallError::TYPE.E_CALL_NOT_FOUND
+
+  # Initiate calling config update.
+  initiate_config: =>
+    @_update_calling_config()
+    window.setInterval =>
+      @_update_calling_config()
+    , CALLING_CONFIG.CONFIG_UPDATE_INTERVAL
 
   # Forward user action to with a call to the appropriate call center.
-  switch_call_center: (fn_name, args)=>
+  switch_call_center: (fn_name, args) =>
     @get_version_of_call args[0]
     .then (call_version) =>
       if not call_version and fn_name is z.e_call.enum.E_CALL_ACTION.TOGGLE_STATE
         call_version = if @use_v3_api then z.e_call.enum.E_CALL_VERSION.E_CALL else z.e_call.enum.E_CALL_VERSION.BELFRY
+
       switch call_version
         when z.e_call.enum.E_CALL_VERSION.BELFRY
           @call_center.state_handler[fn_name].apply @, args
@@ -92,3 +105,13 @@ class z.e_call.CallingRepository
   leave_call_on_beforeunload: =>
     @call_center.state_handler.leave_call_on_beforeunload()
     @e_call_center.leave_call_on_beforeunload()
+
+  ###
+  Get the calling config from the backend and store it.
+  @private
+  ###
+  _update_calling_config: ->
+    @calling_service.get_config()
+    .then (calling_config) =>
+      @logger.info 'Updated calling configuration', calling_config
+      @calling_config $.extend use_v3_api: @use_v3_api, calling_config

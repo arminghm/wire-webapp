@@ -19,12 +19,12 @@
 window.z ?= {}
 z.e_call ?= {}
 
-class z.e_call.ECallService
+class z.e_call.CallingService
   constructor: (@client) ->
-    @logger = new z.util.Logger 'z.e_call.ECallService', z.config.LOGGER.OPTIONS
+    @logger = new z.util.Logger 'z.e_call.CallingService', z.config.LOGGER.OPTIONS
 
   ###
-  Retrieves a call config from the backend.
+  Retrieves a calling config from the backend.
   @param [Promise] Promise which resolve with call config information
   ###
   get_config: ->

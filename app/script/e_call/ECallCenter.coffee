@@ -20,7 +20,6 @@ window.z ?= {}
 z.e_call ?= {}
 
 E_CALL_CONFIG =
-  CONFIG_UPDATE_INTERVAL: 6 * 60 * 60 * 1000 # 6 hours
   SUPPORTED_EVENTS: [
     z.event.Client.CALL.E_CALL
   ]
@@ -52,7 +51,7 @@ class z.e_call.ECallCenter
   @param media_repository [z.media.MediaRepository] Repository for media interactions
   @param user_repository [z.user.UserRepository] Repository for all user and connection interactions
   ###
-  constructor: (@e_call_service, @conversation_repository, @media_repository, @user_repository) ->
+  constructor: (@calling_config, @conversation_repository, @media_repository, @user_repository) ->
     @logger = new z.util.Logger 'z.e_call.ECallCenter', z.config.LOGGER.OPTIONS
 
     # Media Handler
@@ -60,10 +59,9 @@ class z.e_call.ECallCenter
     @media_stream_handler = @media_repository.stream_handler
     @media_element_handler = @media_repository.element_handler
 
-    @config = ko.observable()
     @e_calls = ko.observableArray []
     @joined_e_call = ko.pureComputed =>
-      return if not @self_client_joined()
+      return unless @self_client_joined()
       return e_call_et for e_call_et in @e_calls() when e_call_et.self_client_joined()
 
     @self_state = @media_stream_handler.self_stream_state
@@ -73,16 +71,8 @@ class z.e_call.ECallCenter
 
     @subscribe_to_events()
 
-  # Initiate calls config update.
-  initiate_config: =>
-    @_update_e_call_config()
-    window.setInterval =>
-      @_update_e_call_config()
-    , E_CALL_CONFIG.CONFIG_UPDATE_INTERVAL
-
   # Subscribe to amplify topics.
   subscribe_to_events: =>
-    amplify.subscribe z.event.WebApp.LOADED, @initiate_config
     amplify.subscribe z.event.WebApp.CALL.EVENT_FROM_BACKEND, @on_event
     amplify.subscribe z.util.Logger::LOG_ON_DEBUG, @set_logging
 
@@ -226,7 +216,6 @@ class z.e_call.ECallCenter
   @param e_call_message [z.e_call.entities.ECallMessage] E-call message entity
   ###
   send_e_call_event: (conversation_et, e_call_message) =>
-    throw new z.e_call.ECallError z.e_call.ECallError::TYPE.NOT_ENABLED if not @use_v3_api
     throw new z.e_call.ECallError z.e_call.ECallError::TYPE.NOT_SUPPORTED if not conversation_et.is_one2one()
     throw new z.e_call.ECallError z.e_call.ECallError::TYPE.WRONG_PAYLOAD_FORMAT if not _.isObject e_call_message
 
@@ -410,11 +399,12 @@ class z.e_call.ECallCenter
     @get_e_call_by_id conversation_id
     .catch (error) =>
       throw error if error.type isnt z.e_call.ECallError::TYPE.E_CALL_NOT_FOUND
+      throw new z.e_call.ECallError z.e_call.ECallError::TYPE.NOT_ENABLED unless @calling_config().use_v3_api
       @_create_outgoing_e_call conversation_id, new z.e_call.entities.ECallPropSyncMessage false, videosend: video_send
     .then (e_call_et) =>
       @logger.debug "Joining e-call in conversation '#{conversation_id}'", e_call_et
       e_call = e_call_et
-      if not @media_stream_handler.has_media_streams()
+      unless @media_stream_handler.has_media_streams()
         @media_stream_handler.initiate_media_stream conversation_id, video_send
     .then =>
       switch e_call.state()
@@ -548,13 +538,3 @@ class z.e_call.ECallCenter
   ###
   _self_participant_on_a_call: ->
     return e_call_et.id for e_call_et in @e_calls() when e_call_et.self_user_joined()
-
-  ###
-  Get the e-call config from the backend and store it.
-  @private
-  ###
-  _update_e_call_config: ->
-    @e_call_service.get_config()
-    .then (config) =>
-      @logger.info 'Updated e-call configuration', config
-      @config config
