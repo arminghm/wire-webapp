@@ -88,9 +88,9 @@ class z.calling.belfry.CallCenter
     return if event.type not in SUPPORTED_EVENTS
 
     if @state_handler.block_event_handling
-      @logger.info "Skipping '#{event.type}' event", {event_object: event, event_json: JSON.stringify event}
+      @logger.info "Skipping '#{event.type}' event in conversation '#{event.conversation}'", {event_object: event, event_json: JSON.stringify event}
     else
-      @logger.info "Handling '#{event.type}' event", {event_object: event, event_json: JSON.stringify event}
+      @logger.info "Handling '#{event.type}' event in conversation '#{event.conversation}", {event_object: event, event_json: JSON.stringify event}
       if z.calling.CallingRepository.supports_calling()
         @_on_event_in_supported_browsers event
       else
